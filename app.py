@@ -41,10 +41,18 @@ def home():
 
 @app.route("/vote", methods=["POST"])
 def vote():
-    # (Your voting logic here)
+    # (Your vote processing logic here)
+
+    # After updating the database, print all teachers and scores
+    conn = get_db_connection()
+    teachers = conn.execute("SELECT name, score FROM teachers").fetchall()
+    conn.close()
+
+    print("Current scores:")
+    for t in teachers:
+        print(f"{t['name']}: {t['score']}")
+
     return redirect("/")
-
-
 
 if __name__ == "__main__":
     import os
