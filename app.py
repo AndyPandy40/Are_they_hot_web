@@ -52,30 +52,7 @@ def vote():
 
     return redirect("/")
 
-@app.route("/leaderboard")
-def leaderboard():
-    conn = get_db_connection()
-    teachers = conn.execute("SELECT * FROM teachers ORDER BY score DESC").fetchall()
-    conn.close()
 
-    return render_template_string("""
-        <html>
-        <head><title>Leaderboard</title></head>
-        <body>
-            <h1>🏆 Leaderboard</h1>
-            <table border="1" cellpadding="10">
-                <tr><th>Name</th><th>Score</th></tr>
-                {% for teacher in teachers %}
-                    <tr>
-                        <td>{{ teacher["name"] }}</td>
-                        <td>{{ teacher["score"] }}</td>
-                    </tr>
-                {% endfor %}
-            </table>
-            <p><a href="/">← Back to voting</a></p>
-        </body>
-        </html>
-    """, teachers=teachers)
 
 if __name__ == "__main__":
     import os
