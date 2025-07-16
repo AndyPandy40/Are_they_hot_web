@@ -1,55 +1,83 @@
-from flask import Flask, render_template, request, redirect
-import csv
+from flask import Flask, render_template_string, request, redirect
+import sqlite3
 import random
 
 app = Flask(__name__)
 
-CSV_FILE = 'teacher_stats.csv'
-IMAGE_FOLDER = 'static/teacher_photos'
+DB_PATH = "scores.db"
 
+def get_db_connection():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-def load_stats():
-    with open(CSV_FILE, newline='') as csvfile:
-        return list(csv.DictReader(csvfile))
+@app.route("/")
+def home():
+    conn = get_db_connection()
+    teachers = conn.execute("SELECT * FROM teachers").fetchall()
+    conn.close()
 
+    teacher1, teacher2 = random.sample(teachers, 2)
+    return render_template_string("""
+        <html>
+        <head><title>Are They Hot?</title></head>
+        <body>
+            <h1>🔥 Who's hotter?</h1>
+            <form method="POST" action="/vote">
+                <input type="hidden" name="t1_id" value="{{ t1['id'] }}">
+                <input type="hidden" name="t2_id" value="{{ t2['id'] }}">
+                <button type="submit" name="choice" value="t1">{{ t1["name"] }}</button>
+                <button type="submit" name="choice" value="t2">{{ t2["name"] }}</button>
+            </form>
+            <p><a href="/leaderboard">View leaderboard</a></p>
+        </body>
+        </html>
+    """, t1=teacher1, t2=teacher2)
 
-def save_stats(stats):
-    with open(CSV_FILE, 'w', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=stats[0].keys())
-        writer.writeheader()
-        writer.writerows(stats)
+@app.route("/vote", methods=["POST"])
+def vote():
+    t1_id = int(request.form["t1_id"])
+    t2_id = int(request.form["t2_id"])
+    choice = request.form["choice"]
 
+    conn = get_db_connection()
+    if choice == "t1":
+        conn.execute("UPDATE teachers SET score = score + 5 WHERE id = ?", (t1_id,))
+        conn.execute("UPDATE teachers SET score = score - 5 WHERE id = ?", (t2_id,))
+    else:
+        conn.execute("UPDATE teachers SET score = score + 5 WHERE id = ?", (t2_id,))
+        conn.execute("UPDATE teachers SET score = score - 5 WHERE id = ?", (t1_id,))
+    conn.commit()
+    conn.close()
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    stats = load_stats()
+    return redirect("/")
 
-    if request.method == "POST":
-        choice = request.form["choice"]
-        id1 = int(request.form["id1"])
-        id2 = int(request.form["id2"])
+@app.route("/leaderboard")
+def leaderboard():
+    conn = get_db_connection()
+    teachers = conn.execute("SELECT * FROM teachers ORDER BY score DESC").fetchall()
+    conn.close()
 
-        if choice == "1":
-            stats[id1]["Score"] = str(int(stats[id1]["Score"]) + 5)
-            stats[id2]["Score"] = str(int(stats[id2]["Score"]) - 5)
-        else:
-            stats[id2]["Score"] = str(int(stats[id2]["Score"]) + 5)
-            stats[id1]["Score"] = str(int(stats[id1]["Score"]) - 5)
-
-        save_stats(stats)
-        return redirect("/")
-
-    num1, num2 = random.sample(range(len(stats)), 2)
-    teacher1 = stats[num1]
-    teacher2 = stats[num2]
-
-    return render_template("index.html",
-                           teacher1=teacher1,
-                           teacher2=teacher2,
-                           id1=num1,
-                           id2=num2)
-
+    return render_template_string("""
+        <html>
+        <head><title>Leaderboard</title></head>
+        <body>
+            <h1>🏆 Leaderboard</h1>
+            <table border="1" cellpadding="10">
+                <tr><th>Name</th><th>Score</th></tr>
+                {% for teacher in teachers %}
+                    <tr>
+                        <td>{{ teacher["name"] }}</td>
+                        <td>{{ teacher["score"] }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+            <p><a href="/">← Back to voting</a></p>
+        </body>
+        </html>
+    """, teachers=teachers)
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
