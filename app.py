@@ -19,37 +19,29 @@ def home():
 
     teacher1, teacher2 = random.sample(teachers, 2)
     return render_template_string("""
-        <html>
-        <head><title>Are They Hot?</title></head>
-        <body>
-            <h1>🔥 Who's hotter?</h1>
-            <form method="POST" action="/vote">
-                <input type="hidden" name="t1_id" value="{{ t1['id'] }}">
-                <input type="hidden" name="t2_id" value="{{ t2['id'] }}">
-                <button type="submit" name="choice" value="t1">{{ t1["name"] }}</button>
-                <button type="submit" name="choice" value="t2">{{ t2["name"] }}</button>
-            </form>
-            <p><a href="/leaderboard">View leaderboard</a></p>
-        </body>
-        </html>
+    <html>
+      <head><title>Vote</title></head>
+      <body>
+        <h1>Who is hotter?</h1>
+        <form method="POST" action="/vote">
+          <input type="hidden" name="t1_id" value="{{ t1['id'] }}">
+          <input type="hidden" name="t2_id" value="{{ t2['id'] }}">
+
+          <button type="submit" name="choice" value="t1" style="border:none; background:none;">
+            <img src="{{ url_for('static', filename='teacher_photos/' + t1['photo']) }}" alt="Teacher 1" style="max-height:300px;">
+          </button>
+
+          <button type="submit" name="choice" value="t2" style="border:none; background:none;">
+            <img src="{{ url_for('static', filename='teacher_photos/' + t2['photo']) }}" alt="Teacher 2" style="max-height:300px;">
+          </button>
+        </form>
+      </body>
+    </html>
     """, t1=teacher1, t2=teacher2)
 
 @app.route("/vote", methods=["POST"])
 def vote():
-    t1_id = int(request.form["t1_id"])
-    t2_id = int(request.form["t2_id"])
-    choice = request.form["choice"]
-
-    conn = get_db_connection()
-    if choice == "t1":
-        conn.execute("UPDATE teachers SET score = score + 5 WHERE id = ?", (t1_id,))
-        conn.execute("UPDATE teachers SET score = score - 5 WHERE id = ?", (t2_id,))
-    else:
-        conn.execute("UPDATE teachers SET score = score + 5 WHERE id = ?", (t2_id,))
-        conn.execute("UPDATE teachers SET score = score - 5 WHERE id = ?", (t1_id,))
-    conn.commit()
-    conn.close()
-
+    # (Your voting logic here)
     return redirect("/")
 
 
