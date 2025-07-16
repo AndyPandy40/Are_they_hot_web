@@ -47,10 +47,11 @@ def vote():
     conn = get_db_connection()
     teachers = conn.execute("SELECT name, score FROM teachers").fetchall()
     conn.close()
-
-    print("Current scores:")
-    for t in teachers:
-        print(f"{t['name']}: {t['score']}")
+    
+    # Uncomment the following lines to print the scores in the console
+    #print("Current scores:")
+    #for t in teachers:
+    #    print(f"{t['name']}: {t['score']}")
 
     return redirect("/")
 
