@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Who's hotter?</title>
+</head>
+<body style="text-align: center; font-family: sans-serif;">
+  <h1>Who's hotter?</h1>
+  <form method="POST">
+    <input type="hidden" name="id1" value="{{ id1 }}">
+    <input type="hidden" name="id2" value="{{ id2 }}">
+
+    <button type="submit" name="choice" value="1" style="border:none; background:none; margin: 20px;">
+      <img src="{{ url_for('static', filename='teacher_photos/' + teacher1['Photo']) }}" height="400">
+    </button>
+
+    <button type="submit" name="choice" value="2" style="border:none; background:none; margin: 20px;">
+      <img src="{{ url_for('static', filename='teacher_photos/' + teacher2['Photo']) }}" height="400">
+    </button>
+  </form>
+</body>
+</html>
+ 
